@@ -1,10 +1,8 @@
 import 'package:flutter/material.dart';
-import 'package:http/http.dart' as http;
 import 'package:recetario/models/category.dart';
-import 'package:recetario/models/category_list.dart';
 import 'package:recetario/models/recipe.dart';
-import 'package:recetario/models/recipe_list.dart';
 import 'package:recetario/screens/recipe_detail_screen.dart';
+import 'package:recetario/services/recipe_service.dart';
 import 'package:recetario/widgets/recipe_card.dart';
 
 class RecipeListScreen extends StatefulWidget {
@@ -24,6 +22,7 @@ class _RecipeListScreenState extends State<RecipeListScreen> {
 	bool isLoading = false;
 	Category? selectedCategory;
 	late Future<List<Category>> categoriesFuture;
+	final recipeService = RecipeService();
 
 	void toggleFavorite(Recipe recipe) {
 		if (favorites.contains(recipe)) {
@@ -108,11 +107,7 @@ class _RecipeListScreenState extends State<RecipeListScreen> {
 			isLoading = true;
 		});
 		try {
-		  	final http.Response response = await http.get(
-				Uri.parse("https://xupxup.poquesoft.net/recipes?search=$searchQuery&category=${selectedCategory?.id ?? ''}"),
-			);
-			final RecipeList recipeList = recipeListFromJson(response.body);
-			apiRecipes = recipeList.recipes;
+			apiRecipes = await recipeService.getRecipes(searchQuery: searchQuery, categoryId: selectedCategory?.id ?? '');
 		} catch (e) {
 			if (!mounted) return;
 			ScaffoldMessenger.of(context).showSnackBar(
@@ -129,11 +124,7 @@ class _RecipeListScreenState extends State<RecipeListScreen> {
 
 	Future<List<Category>> loadCategories() async {
 		try {
-		  	final http.Response response = await http.get(
-				Uri.parse("https://xupxup.poquesoft.net/categories"),
-			);
-			final categoryList = categoryListFromJson(response.body);
-			return categoryList.categories;
+			return await recipeService.getCategories();
 		} catch (e) {
 			if (!mounted) return [];
 			ScaffoldMessenger.of(context).showSnackBar(
