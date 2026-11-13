@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:recetario/screens/recipe_list_screen.dart';
+import 'package:recetario/screens/home_screen.dart';
 import 'package:recetario/styles/app_styles.dart';
 
 void main() {
@@ -21,7 +21,7 @@ class RecipeApp extends StatelessWidget {
 					foregroundColor: AppStyles.onPrimaryColor,
 				),
 			),
-			home: RecipeListScreen(), // Replace with your actual recipe data source
+			home: HomeScreen(), // Replace with your actual recipe data source
 	);
 	}
 }

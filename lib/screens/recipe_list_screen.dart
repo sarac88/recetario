@@ -6,7 +6,9 @@ import 'package:recetario/services/recipe_service.dart';
 import 'package:recetario/widgets/recipe_card.dart';
 
 class RecipeListScreen extends StatefulWidget {
-	const RecipeListScreen({super.key});
+	const RecipeListScreen({super.key, required this.favorites, required this.onFavoritePressed});
+	final Set<Recipe> favorites;
+	final Function(Recipe recipe) onFavoritePressed;
 
   	@override
   	State<RecipeListScreen> createState() => _RecipeListScreenState();
@@ -14,38 +16,13 @@ class RecipeListScreen extends StatefulWidget {
 
 class _RecipeListScreenState extends State<RecipeListScreen> {
 	
-	final Set<Recipe> favorites = {};
 	String searchQuery = '';
-	int selectedIndex = 0;
 	TextEditingController searchController = TextEditingController();
 	List<Recipe> apiRecipes = [];
 	bool isLoading = false;
 	Category? selectedCategory;
 	late Future<List<Category>> categoriesFuture;
 	final recipeService = RecipeService();
-
-	void toggleFavorite(Recipe recipe) {
-		if (favorites.contains(recipe)) {
-			favorites.remove(recipe);
-			ScaffoldMessenger.of(context).showSnackBar(
-				SnackBar(
-					content: Text('${recipe.title} eliminado de favoritos.'),
-					persist: false,
-					duration: Duration(seconds: 2),
-					action: SnackBarAction(
-						label: 'Deshacer',
-						onPressed: () {
-							favorites.add(recipe);
-							setState(() {});
-						},
-					),
-				),
-			);
-		} else {
-			favorites.add(recipe);
-		}
-		setState(() {});
-	}
 
 	void clearSearch() {
 		searchController.clear();
@@ -61,46 +38,6 @@ class _RecipeListScreenState extends State<RecipeListScreen> {
 		categoriesFuture = loadCategories();
 	}
 
-	void openRecipe(Recipe recipe) {
-		Navigator.push(
-			context,
-			MaterialPageRoute(
-				builder: (context) => RecipeDetailScreen(recipe: recipe),
-			),
-		);
-	}
-
-	Future<void> confirmClearFavorites() async {
-		final confirmed = await showDialog<bool>(
-			context: context,
-			barrierDismissible: false,
-			builder: (BuildContext context) {
-				return AlertDialog(
-					title: Text('Confirmar'),
-					content: Text('¿Estás seguro de que deseas eliminar todos los favoritos?'),
-					actions: <Widget>[
-						TextButton(
-							child: Text('Cancelar'),
-							onPressed: () {
-								Navigator.of(context).pop();
-							},
-						),
-						TextButton(
-							child: Text('Eliminar'),
-							onPressed: () {
-								setState(() {
-									favorites.clear();
-								});
-								Navigator.of(context).pop();
-							},
-						),
-					],
-				);
-			},
-		);
-
-		debugPrint('Confirmación de eliminación de favoritos: $confirmed');
-	}
 
 	Future<void> loadRecipes() async {
 		setState(() {
@@ -139,20 +76,17 @@ class _RecipeListScreenState extends State<RecipeListScreen> {
 
 	@override
 	Widget build(BuildContext context) {
-
-		final List<Recipe> filteredRecipes = selectedIndex == 0 
-		? apiRecipes.toList()
-		: favorites.toList();
+		final List<Recipe> filteredRecipes = apiRecipes.toList();
 
 		return Scaffold(
 			appBar: AppBar(
 				title: Text('Recetario'),
 				actions: [
-					if (selectedIndex == 1 && favorites.isNotEmpty)
-						IconButton(
-							icon: Icon(Icons.delete),
-							onPressed: confirmClearFavorites,
-						),
+					// if (selectedIndex == 1 && favorites.isNotEmpty)
+					// 	IconButton(
+					// 		icon: Icon(Icons.delete),
+					// 		onPressed: confirmClearFavorites,
+					// 	),
 					Padding(
 					  padding: .all(8),
 					  child: Stack(
@@ -164,7 +98,7 @@ class _RecipeListScreenState extends State<RecipeListScreen> {
 					  				// Navigate to favorites screen
 					  			},
 					  		),
-					  		if (favorites.isNotEmpty)
+					  		if (widget.favorites.isNotEmpty)
 					  			Positioned(
 					  				right: 8,
 					  				top: 8,
@@ -179,7 +113,7 @@ class _RecipeListScreenState extends State<RecipeListScreen> {
 					  						minHeight: 12,
 					  					),
 					  					child: Text(
-					  						favorites.length.toString(),
+					  						widget.favorites.length.toString(),
 					  						style: TextStyle(
 					  							color: Colors.white,
 					  							fontSize: 10,
@@ -196,7 +130,6 @@ class _RecipeListScreenState extends State<RecipeListScreen> {
 			),
 			body: Column(
 			  children: [
-				if(selectedIndex == 0)
 				Padding(
 				  padding: .all(8),
 				  child: TextField(
@@ -266,26 +199,53 @@ class _RecipeListScreenState extends State<RecipeListScreen> {
 				  	? Center(child: CircularProgressIndicator())
 				  	: filteredRecipes.isEmpty
 			      	? Center(child: Text('No se encontraron recetas.')) 
-					: GridView.builder(
-			      	gridDelegate: SliverGridDelegateWithMaxCrossAxisExtent(
-			      		maxCrossAxisExtent: 250,
-			      	),
-			      	itemCount: filteredRecipes.length, // Replace with your actual recipe data source
-			      	itemBuilder: (context, index) {
-			      		final recipe = filteredRecipes[index]; // Replace with your actual recipe data source
-			      		return RecipeCard(
-			      			recipe: recipe,
-			      			isFavorite: favorites.contains(recipe),
-			      			onFavoritePressed: () => toggleFavorite(recipe),
-							onTap: () {
-								openRecipe(recipe);
-							},// Navigate to recipe detail screen},
-			      		);
-			      	},
-			      ),
+					: RecipeGrid(filteredRecipes: filteredRecipes, favorites: widget.favorites, onFavoritePressed: widget.onFavoritePressed),
 			    ),
 			  ],
 			),
 		);
+	}
+}
+
+class RecipeGrid extends StatelessWidget {
+	const RecipeGrid({
+		super.key,
+		required this.filteredRecipes,
+		required this.favorites,
+		required this.onFavoritePressed,
+	});
+
+	final List<Recipe> filteredRecipes;
+	final Set<Recipe> favorites;
+	final Function(Recipe recipe) onFavoritePressed;
+
+	void openRecipe(BuildContext context, Recipe recipe) {
+		Navigator.push(
+			context,
+			MaterialPageRoute(
+				builder: (context) => RecipeDetailScreen(recipe: recipe),
+			),
+		);
+	}
+
+  	@override
+	Widget build(BuildContext context) {
+		return GridView.builder(
+			gridDelegate: SliverGridDelegateWithMaxCrossAxisExtent(
+				maxCrossAxisExtent: 250,
+			),
+			itemCount: filteredRecipes.length, // Replace with your actual recipe data source
+			itemBuilder: (context, index) {
+				final recipe = filteredRecipes[index]; // Replace with your actual recipe data source
+				return RecipeCard(
+					recipe: recipe,
+					isFavorite: favorites.contains(recipe),
+					onFavoritePressed: () => onFavoritePressed(recipe),
+				onTap: () {
+					openRecipe(context, recipe);
+				},// Navigate to recipe detail screen},
+							);
+				},
+			);
 	}
 }
