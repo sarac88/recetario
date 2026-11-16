@@ -76,29 +76,37 @@ class _HomeScreenState extends State<HomeScreen> {
 			FavoritesScreen(favorites: favorites, onFavoritePressed: toggleFavorite, onClearFavorites: confirmClearFavorites),
 		];
 	
-		return Scaffold(
-			body: IndexedStack(
-				index: selectedIndex,
-				children: screens,
+		return PopScope(
+			canPop: selectedIndex == 0,
+			onPopInvokedWithResult: (didPop,result) {
+				if (!didPop) {
+					selectedIndex = 0;
+					setState(() {});
+				}
+			},
+			child: Scaffold(
+				body: IndexedStack(
+					index: selectedIndex,
+					children: screens,
+				),
+				bottomNavigationBar: NavigationBar(
+							selectedIndex: selectedIndex,
+							onDestinationSelected: (index) {
+								selectedIndex = index;
+								setState(() {});
+							},
+							destinations: [
+							NavigationDestination(
+								icon: Icon(Icons.restaurant_menu),
+								label: 'Inicio',
+							),
+							NavigationDestination(
+								icon: Icon(Icons.favorite),
+								label: 'Favoritos',
+							),
+						],
+					)
 			),
-			bottomNavigationBar: NavigationBar(
-						selectedIndex: selectedIndex,
-						onDestinationSelected: (index) {
-							selectedIndex = index;
-							setState(() {});
-						},
-						destinations: [
-						NavigationDestination(
-							icon: Icon(Icons.restaurant_menu),
-							label: 'Inicio',
-						),
-						NavigationDestination(
-							icon: Icon(Icons.favorite),
-							label: 'Favoritos',
-						),
-					],
-				)
 		);
-
 	}
 }

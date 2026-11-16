@@ -4,6 +4,7 @@ import 'package:recetario/models/recipe.dart';
 import 'package:recetario/screens/recipe_detail_screen.dart';
 import 'package:recetario/services/recipe_service.dart';
 import 'package:recetario/styles/app_styles.dart';
+import 'package:recetario/widgets/app_drawer.dart';
 import 'package:recetario/widgets/recipe_card.dart';
 
 class RecipeListScreen extends StatefulWidget {
@@ -131,6 +132,7 @@ class _RecipeListScreenState extends State<RecipeListScreen> {
 					),
 				],
 			),
+			drawer: AppDrawer(),
 			body: Column(
 			  children: [
 				Padding(
