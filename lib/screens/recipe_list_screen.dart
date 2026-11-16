@@ -3,6 +3,7 @@ import 'package:recetario/models/category.dart';
 import 'package:recetario/models/recipe.dart';
 import 'package:recetario/screens/recipe_detail_screen.dart';
 import 'package:recetario/services/recipe_service.dart';
+import 'package:recetario/styles/app_styles.dart';
 import 'package:recetario/widgets/recipe_card.dart';
 
 class RecipeListScreen extends StatefulWidget {
@@ -82,11 +83,13 @@ class _RecipeListScreenState extends State<RecipeListScreen> {
 			appBar: AppBar(
 				title: Text('Recetario'),
 				actions: [
-					// if (selectedIndex == 1 && favorites.isNotEmpty)
-					// 	IconButton(
-					// 		icon: Icon(Icons.delete),
-					// 		onPressed: confirmClearFavorites,
-					// 	),
+					IconButton(
+						onPressed: showFilters,
+						icon: Badge(
+							isLabelVisible: selectedCategory != null,
+							child: Icon(Icons.filter_list)
+							),
+					),
 					Padding(
 					  padding: .all(8),
 					  child: Stack(
@@ -154,46 +157,6 @@ class _RecipeListScreenState extends State<RecipeListScreen> {
 					},
 				  ),
 				),
-				SizedBox(
-					height: 50,
-					child: FutureBuilder<List<Category>>(
-						future: categoriesFuture,
-						builder: (context, snapshot) {
-						if (snapshot.hasError) {
-						return Center(child: Text('Error al cargar las categorías'),
-						);
-						}
-						if (!snapshot.hasData) {
-						return Center(child: CircularProgressIndicator());
-						}
-						final categories = snapshot.data!;
-						if (categories.isEmpty) {
-						return Center(child: Text('No se encontraron categorías'));
-						}
-						return ListView.builder(
-							scrollDirection: .horizontal,
-							itemCount: categories.length,
-							itemBuilder: (context, index) {
-								final category = categories[index];
-								return Padding(
-								  padding: const EdgeInsets.symmetric(horizontal: 8),
-								  child: ChoiceChip(
-								  	label: Text(category.name),
-								  	selected: selectedCategory == category,
-									onSelected: (bool selected) async {
-										setState(() {
-											selectedCategory = selected ? categories[index] : null;
-										});
-										await loadRecipes();
-										setState(() {});
-									}
-								  ),
-								);
-							},
-						);
-						},
-					),
-				),
 			    Expanded(
 			      child: isLoading 
 				  	? Center(child: CircularProgressIndicator())
@@ -205,14 +168,67 @@ class _RecipeListScreenState extends State<RecipeListScreen> {
 			),
 		);
 	}
+
+  	void showFilters() {
+		showModalBottomSheet(
+			context: context,
+			builder: (BuildContext context) => 
+				Padding(
+				  padding: const EdgeInsets.all(8.0),
+				  child: Column(
+					mainAxisSize: .min,
+					crossAxisAlignment: .stretch,
+					children: [
+						AppStyles.mediumSeparator,
+						Text('Selecciona una categoría',
+							style: AppStyles.sectionTitle,
+						),
+						FutureBuilder<List<Category>>(
+							future: categoriesFuture,
+							builder: (context, snapshot) {
+							if (snapshot.hasError) {
+							return Center(child: Text('Error al cargar las categorías'),
+							);
+							}
+							if (!snapshot.hasData) {
+							return Center(child: CircularProgressIndicator());
+							}
+							final categories = snapshot.data!;
+							if (categories.isEmpty) {
+							return Center(child: Text('No se encontraron categorías'));
+							}
+							return Wrap(
+								children: [
+									for (final category in categories)
+										Padding(
+											padding: .symmetric(horizontal: 8),
+											child: ChoiceChip(
+												label: Text(category.name),
+												selected: selectedCategory == category,
+												onSelected: (bool selected) async {
+													selectedCategory = selected ? category : null;
+													Navigator.pop(context);
+													await loadRecipes();
+													setState(() {});
+												},
+											),
+										),
+								],
+							);
+							},
+						),
+				  ],),
+				)
+		);
+  	}
 }
 
 class RecipeGrid extends StatelessWidget {
 	const RecipeGrid({
 		super.key,
 		required this.filteredRecipes,
-		required this.favorites,
-		required this.onFavoritePressed,
+    	required this.favorites,
+    	required this.onFavoritePressed,
 	});
 
 	final List<Recipe> filteredRecipes;
@@ -241,11 +257,9 @@ class RecipeGrid extends StatelessWidget {
 					recipe: recipe,
 					isFavorite: favorites.contains(recipe),
 					onFavoritePressed: () => onFavoritePressed(recipe),
-				onTap: () {
-					openRecipe(context, recipe);
-				},// Navigate to recipe detail screen},
-							);
-				},
-			);
+					onTap: () => openRecipe(context, recipe),
+				);
+			},
+		);
 	}
 }

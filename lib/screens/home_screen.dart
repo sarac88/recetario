@@ -73,7 +73,7 @@ class _HomeScreenState extends State<HomeScreen> {
 	Widget build(BuildContext context) {
 		final screens = [
 			RecipeListScreen(onFavoritePressed: toggleFavorite, favorites: favorites),
-			FavoritesScreen(favorites: favorites, onFavoritePressed: toggleFavorite),
+			FavoritesScreen(favorites: favorites, onFavoritePressed: toggleFavorite, onClearFavorites: confirmClearFavorites),
 		];
 	
 		return Scaffold(
