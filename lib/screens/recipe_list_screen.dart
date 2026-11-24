@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:recetario/models/category.dart';
 import 'package:recetario/models/recipe.dart';
+import 'package:recetario/repositories/api_recipe_repository.dart';
 import 'package:recetario/screens/recipe_detail_screen.dart';
-import 'package:recetario/services/recipe_service.dart';
 import 'package:recetario/styles/app_styles.dart';
 import 'package:recetario/widgets/app_drawer.dart';
 import 'package:recetario/widgets/recipe_card.dart';
@@ -24,7 +24,7 @@ class _RecipeListScreenState extends State<RecipeListScreen> {
 	bool isLoading = false;
 	Category? selectedCategory;
 	late Future<List<Category>> categoriesFuture;
-	final recipeService = RecipeService();
+	final ApiRecipeRepository recipeRepository = ApiRecipeRepository();
 
 	void clearSearch() {
 		searchController.clear();
@@ -46,7 +46,7 @@ class _RecipeListScreenState extends State<RecipeListScreen> {
 			isLoading = true;
 		});
 		try {
-			apiRecipes = await recipeService.getRecipes(searchQuery: searchQuery, categoryId: selectedCategory?.id ?? '');
+			apiRecipes = await recipeRepository.getRecipes(searchQuery: searchQuery, categoryId: selectedCategory?.id ?? '');
 		} catch (e) {
 			if (!mounted) return;
 			ScaffoldMessenger.of(context).showSnackBar(
@@ -63,7 +63,7 @@ class _RecipeListScreenState extends State<RecipeListScreen> {
 
 	Future<List<Category>> loadCategories() async {
 		try {
-			return await recipeService.getCategories();
+			return await recipeRepository.getCategories();
 		} catch (e) {
 			if (!mounted) return [];
 			ScaffoldMessenger.of(context).showSnackBar(

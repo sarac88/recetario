@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:recetario/models/recipe.dart';
 import 'package:recetario/models/recipe_detail.dart';
-import 'package:recetario/services/recipe_service.dart';
+import 'package:recetario/repositories/api_recipe_repository.dart';
+import 'package:recetario/repositories/recipe_repository.dart';
 import 'package:recetario/styles/app_styles.dart';
 import 'package:recetario/widgets/cooking_timer.dart';
 import 'package:recetario/widgets/icon_text.dart';
@@ -18,7 +19,8 @@ class RecipeDetailScreen extends StatefulWidget {
 class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
 
 	late Future<RecipeDetail> recipeFuture;
-	final recipeService = RecipeService();
+	final RecipeRepository recipeRepository = ApiRecipeRepository();
+
 	@override
 	void initState() {
 		super.initState();
@@ -26,7 +28,7 @@ class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
 	}
 
 	Future<RecipeDetail> loadRecipeDetail() async {
-		return await recipeService.getRecipe(widget.recipe.id);
+		return await recipeRepository.getRecipe(widget.recipe.id);
 	}
 	@override
 	Widget build(BuildContext context) {
